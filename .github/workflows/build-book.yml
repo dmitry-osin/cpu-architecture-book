@@ -1,0 +1,70 @@
+name: Build Book PDF
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '**.md'
+      - 'metadata.yml'
+      - 'scripts/**'
+      - '.github/workflows/build-book.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - '**.md'
+      - 'metadata.yml'
+      - 'scripts/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended texlive-lang-cyrillic
+      
+      - name: Create build directory
+        run: mkdir -p build
+      
+      - name: Combine markdown files
+        run: |
+          chmod +x scripts/build-book.py
+          python scripts/build-book.py
+      
+      - name: Generate PDF
+        run: |
+          pandoc build/book.md \
+            --pdf-engine=xelatex \
+            --toc \
+            -o build/cpu-architecture-book.pdf
+      
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-pdf
+          path: build/cpu-architecture-book.pdf
+          
+      - name: Create Release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/cpu-architecture-book.pdf
+          name: Книга об архитектуре CPU процессорах - Обновление ${{ github.run_number }}
+          tag_name: v0.1.${{ github.run_number }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

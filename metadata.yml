@@ -1,0 +1,12 @@
+---
+title: "Книга об архитектуре CPU"
+author: "Dmitry Osin"
+date: "2025"
+lang: ru
+mainfont: "DejaVu Serif"
+monofont: "DejaVu Sans Mono"
+fontsize: 12pt
+documentclass: book
+toc: true
+toc-depth: 2
+---
